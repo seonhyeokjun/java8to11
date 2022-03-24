@@ -84,5 +84,21 @@ public class App {
                 .filter(title -> title.contains("spring")).collect(Collectors.toList());
         spring.forEach(System.out::println);
 
+        Optional<OnlineClass> spring1 = springClasses.stream().filter(oc -> oc.getTitle().startsWith("spring"))
+                .findFirst();
+        boolean present = spring1.isPresent();
+        System.out.println(present);
+
+        Optional<OnlineClass> optional = springClasses.stream()
+                .filter(oc -> oc.getTitle().startsWith("spring"))
+                .findFirst();
+
+        OnlineClass onlineClass = optional.orElseGet(App::createNewClasses);
+
+    }
+
+    private static OnlineClass createNewClasses() {
+        System.out.println("creating new online class");
+        return new OnlineClass(10, "New class", false);
     }
 }
