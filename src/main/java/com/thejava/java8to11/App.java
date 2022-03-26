@@ -1,5 +1,8 @@
 package com.thejava.java8to11;
 
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -67,8 +70,6 @@ public class App {
         System.out.println("수업 이름만 모아서 스트림 만들기");
         springClasses.stream().map(OnlineClass::getTitle).forEach(System.out::println);
 
-
-
         System.out.println("두 수업 목록에 들어있는 모든 수업 아이디 출력");
         keesunEvents.stream().flatMap(Collection::stream).forEach(oc -> System.out.println(oc.getId()));
 
@@ -95,6 +96,30 @@ public class App {
 
         OnlineClass onlineClass = optional.orElseGet(App::createNewClasses);
 
+        Calendar keesunBirthDay = new GregorianCalendar(1982, Calendar.JULY, 15);
+        System.out.println(keesunBirthDay.getTime());
+        keesunBirthDay.add(Calendar.DAY_OF_YEAR, 1);
+        System.out.println(keesunBirthDay.getTime());
+
+        Date date = new Date();
+        Instant instant = date.toInstant();
+        Date newDate = Date.from(instant);
+
+        GregorianCalendar gregorianCalendar = new GregorianCalendar();
+        ZonedDateTime dateTime = gregorianCalendar.toInstant().atZone(ZoneId.systemDefault());
+        GregorianCalendar from = GregorianCalendar.from(dateTime);
+
+        ZoneId zoneId = TimeZone.getTimeZone("PST").toZoneId();
+        TimeZone timeZone = TimeZone.getTimeZone(zoneId);
+
+        LocalDateTime now = LocalDateTime.now();
+        now.plus(10, ChronoUnit.DAYS);
+
+        DateTimeFormatter MMddyyyy = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+        System.out.println(now.format(MMddyyyy));
+
+        LocalDate parse = LocalDate.parse("07/15/1982", MMddyyyy);
+        System.out.println(parse);
     }
 
     private static OnlineClass createNewClasses() {
