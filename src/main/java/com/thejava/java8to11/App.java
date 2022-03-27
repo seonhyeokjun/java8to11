@@ -4,15 +4,17 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class App {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
         Greeting greeting = new Greeting();
         UnaryOperator<String> hi = Greeting::hi;
         UnaryOperator<String> hi2 = greeting::hello;
@@ -120,10 +122,95 @@ public class App {
 
         LocalDate parse = LocalDate.parse("07/15/1982", MMddyyyy);
         System.out.println(parse);
+
+        Thread thread = new Thread(() -> {
+            System.out.println("Thread: " + Thread.currentThread().getName());
+            try {
+                Thread.sleep(3000L);
+            } catch (InterruptedException e) {
+                throw new IllegalStateException(e);
+            }
+        });
+        thread.start();
+
+        System.out.println("Hello: " + Thread.currentThread().getName());
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println(thread + " is finished");
+
+//        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+//        executorService.scheduleAtFixedRate(getRunnable("Hello"), 1, 2, TimeUnit.SECONDS);
+
+        ExecutorService executorService = Executors.newFixedThreadPool(4);
+
+        Callable<String> hello2 = () -> {
+            Thread.sleep(2000L);
+            return "Hello";
+        };
+
+        Callable<String> java = () -> {
+            Thread.sleep(3000L);
+            return "Java";
+        };
+
+        Callable<String> keesun = () -> {
+            Thread.sleep(1000L);
+            return "Keesun";
+        };
+
+        String s = executorService.invokeAny(Arrays.asList(hello2, java, keesun));
+        System.out.println(s);
+
+        executorService.shutdown();
+
+        boolean throwError = true;
+
+        CompletableFuture<String> hello = CompletableFuture.supplyAsync(() -> {
+            if (throwError) {
+                throw new IllegalArgumentException();
+            }
+
+            System.out.println("Hello " + Thread.currentThread().getName());
+            return "Hello";
+        }).handle((result, ex) -> {
+            if (ex != null) {
+                System.out.println(ex);
+                return "ERROR!";
+            }
+            return result;
+        });
+
+        System.out.println(hello.get());
+
+        ChickenContainer chickenContainer = App.class.getAnnotation(ChickenContainer.class);
+        Arrays.stream(chickenContainer.value()).forEach(c -> {
+            System.out.println(c.value());
+        });
+
+        int size = 1500;
+        int[] numbers = new int[size];
+        Random random = new Random();
+
+        IntStream.range(0, size).forEach(i -> numbers[i] = random.nextInt());
+        long start = System.nanoTime();
+        Arrays.sort(numbers);
+        System.out.println("serial sorting took " + (System.nanoTime() - start));
+
+        IntStream.range(0, size).forEach(i -> numbers[i] = random.nextInt());
+        start = System.nanoTime();
+        Arrays.parallelSort(numbers);
+        System.out.println("parallel sorting took " + (System.nanoTime() - start));
     }
 
     private static OnlineClass createNewClasses() {
         System.out.println("creating new online class");
         return new OnlineClass(10, "New class", false);
+    }
+
+    private static Runnable getRunnable(String message) {
+        return () -> System.out.println(message + Thread.currentThread().getName());
     }
 }
